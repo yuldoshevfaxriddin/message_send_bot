@@ -33,6 +33,16 @@ Sadullayev Sherzod;998931234567;12.12.2024;15 ming ;
 Axmedov Maxmudjon;998931234567;11.122024;20 ming;
 Abdullayev Artur;998931234567;10.12.2024;87 ming;"""
 
+MESSAGE1 = """"
+Hurmatli Saidov Xudoshkur siz "Baraka Marketdan" 
+12.12.2024 da 100 ming sum qarz qilgansiz, shuni 
+15.12.2024 gacha to'lashingizni so'raymiz.
+"""
+MESSAGE2 = """
+Baraka Market dan
+Saidov Xudoshkur 12.12.2024 kuni 100 ming qarz qilingan
+15.12.2024 gacha to'lashingizni so'raymiz.
+"""
 async def get_telegram_file_information(file_id: str) -> dict:
     respons = requests.get(telegram_file_information+file_id)
     if respons.status_code == 200:
@@ -78,7 +88,16 @@ async def convert_text_to_object(text: str) -> list:
 
 async def send_SMS_message(text: str, number: str) -> bool:
     # habar yuborishkodi 
-    pass
+    print(number, text)
+    return True
+
+async def send_message(users:dict)->bool:
+    for user in users:
+        number = user['tel_number']
+        message = f"""Baraka Market dan 
+        {user['name']} 12.12.2024 kuni {user['price']} qarz qilingan
+        {user['date']} gacha to'lashingizni so'raymiz."""
+        status = await send_SMS_message(number=number,text=message)
 
 dp = Dispatcher()
 
@@ -105,18 +124,16 @@ async def echo_handler(message: Message) -> None:
     file = message.document
     if file:
         file_information = await get_telegram_file_information(file.file_id)
-        print("fayl aniqlandi: ",file_information)
         if file_information['status'] == 'error':
             await message.answer("file malumoti topilmadi")
             return
         file_data = await get_telegram_file_data_reader(file_information['data'])
-        print("fayldan data olindi: ", file_data)
         if file_data['status'] == 'error':
             await message.answer("file malumotlari o'qilmadi")
             return
         users = await convert_text_to_object(file_data['data'])
-        print("users olindi: ",users)
-        # await message.answer(users)
+        await send_message(users)
+        await message.answer(f"{len(users)} ta odam aniqlandi")
 
     try:
         # Send a copy of the received message
